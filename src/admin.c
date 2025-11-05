@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main() {
-    printf("admin");
+    printf("login admin");
     return 0;
 }
