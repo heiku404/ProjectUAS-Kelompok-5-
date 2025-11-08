@@ -1,0 +1,10 @@
+1|Mikroskop|Olympus|CX23|2019|5
+2|Gelas Ukur|Pyrex|100ml|2021|10
+3|Tabung Reaksi|Iwaki|Standard|2020|25
+4|Pipet Tetes|Brand|BlueLine|2022|15
+5|Termometer|Fisher|Glass|2018|8
+6|Bunsen Burner|Humboldt|Mini|2017|6
+7|Timbangan Digital|Ohaus|PA2102|2023|4
+8|Kaca Preparat|LabGlass|Standard|2021|50
+9|Corong Kaca|Iwaki|Small|2020|12
+10|Statif|ScienceLab|Basic|2019|7
