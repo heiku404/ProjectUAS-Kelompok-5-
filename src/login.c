@@ -2,30 +2,43 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-    char username[20];
-    char password[20];
+    FILE *file;
+    char usernameFile[20], passwordFile[20], roleFile[20];
+    char username[20], password[20];
+    int loginBerhasil = 0;
 
-    // Jika username dan password dimasukkan lewat terminal
-    if (argc == 3) {
-        strcpy(username, argv[1]);
-        strcpy(password, argv[2]);
-    } 
-    // Jika tidak, minta input langsung
-    else {
-        printf("=== LOGIN SISTEM PEMINJAMAN ALAT LAB ===\n");
-        printf("Masukkan username: ");
-        scanf("%s", username);
-        printf("Masukkan password: ");
-        scanf("%s", password);
+    // Cek input dari command line
+    if (argc < 3) {
+        printf("Cara pakai: %s <username> <password>\n", argv[0]);
+        return 1;
     }
 
-    // Username dan password yang benar
-    char user_benar[] = "admin";
-    char pass_benar[] = "12345";
-    // Mengecek apakah sesuai
-    if (strcmp(username, user_benar) == 0 && strcmp(password, pass_benar) == 0) {
-        printf("Login berhasil! Selamat datang, %s.\n", username);
-    } else {
+    // Ambil username dan password
+    strcpy(username, argv[1]);
+    strcpy(password, argv[2]);
+
+    // Buka file akun.txt
+    file = fopen("akun.txt", "r");
+    if (file == NULL) {
+        printf("File akun.txt tidak ditemukan!\n");
+        return 1;
+        }
+
+    // Baca file baris per baris
+    while (fscanf(file, "%s %s %s", usernameFile, passwordFile, roleFile) != EOF) {
+        // Cek apakah cocok
+        if (strcmp(username, usernameFile) == 0 && strcmp(password, passwordFile) == 0) {
+            printf("Login berhasil! Anda adalah %s\n", roleFile);
+            loginBerhasil = 1;
+            break;
+        }
+    }
+
+    // Tutup file
+    fclose(file);
+
+    // Jika tidak berhasil
+    if (loginBerhasil == 0) {
         printf("Login gagal! Username atau password salah.\n");
     }
 
