@@ -2,16 +2,15 @@
 
 int login(char *username, char *password)
 {
-    char temp_username[maxSize];
-    char temp_password[maxSize];
+    char temp_username[MAX_ALAT]; 
+    char temp_password[MAX_ALAT];
 
     FILE *fptr;
-    // PERBAIKAN: Path file sekarang benar
-    fptr = fopen("../data/admin.txt", "r");
+    fptr = fopen(ADMIN_PATH, "r"); 
 
     if (fptr == NULL)
     {
-        printf("Error : file ../data/admin.txt tidak ditemukan\n");
+        printf("Error : file %s tidak ditemukan\n", ADMIN_PATH);
         return 0;
     }
 
@@ -26,13 +25,11 @@ int login(char *username, char *password)
 
     fclose(fptr);
 
-    // PERBAIKAN: Path file sekarang benar
-    fptr = fopen("../data/user.txt", "r");
+    fptr = fopen(USER_PATH, "r"); // Menggunakan USER_PATH dari utils.h
 
     if (fptr == NULL)
     {
-        // PERBAIKAN: Pesan error ini salah, sekarang sudah benar
-        printf("Error : file ../data/user.txt tidak ditemukan\n");
+        printf("Error : file %s tidak ditemukan\n", USER_PATH);
         return 0;   
     }
 

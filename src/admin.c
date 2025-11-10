@@ -1,182 +1,143 @@
 #include "../include/utils.h"
 
-
-void tampilkan_alat(){
-    FILE *file = fopen("../data/alat.txt", "r");
-    if (!file) {
-        printf("Belum ada data ../data/alat.txt\n");
-        return;
-    }
-
-    Alat alat; 
-    printf("\n================= Daftar Alat Lab =================\n");
-    
-    while (fscanf(file, "%u;%99[^;];%99[^;];%99[^;];%u;%u;%u\n", 
-                &alat.id, alat.nama, alat.merek, alat.model, 
-                &alat.tahunProduksi, &alat.jumlahUnit, &alat.tersedia) == 7) {
-        printf("ID      : %u\n", alat.id);
-        printf("Nama    : %s\n", alat.nama);
-        printf("Merek   : %s\n", alat.merek);
-        printf("Model   : %s\n", alat.model);
-        printf("Tahun   : %u\n", alat.tahunProduksi);
-        printf("Jumlah  : %u\n", alat.jumlahUnit);
-        printf("Tersedia: %u\n", alat.tersedia);
-        printf("----------------------------------------\n");
-    }
-    fclose(file);
+static void bersihkanBufferAdmin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
 }
 
-void tambah_alat(){
-    FILE *file = fopen("../data/alat.txt", "a");
-    if (!file) {
-        printf("Gagal membuka ../data/alat.txt\n");
+void tampilkan_alat_admin() {
+    int jumlah;
+    Alat* daftar = dapatkanSemuaAlat(&jumlah); 
+
+    printf("\n================================= Daftar Alat Lab (Total: %d) ================================\n", jumlah);
+    if (jumlah == 0) {
+        printf("Data kosong.\n");
         return;
     }
+    
+    printf("| %-3s | %-20s | %-15s | %-15s | %-5s | %-5s | %-8s |\n",
+           "ID", "Nama", "Merek", "Model", "Tahun", "Total", "Tersedia");
+    printf("|-----|----------------------|-----------------|-----------------|-------|-------|----------|\n");
 
-    Alat alat; 
+    for (int i = 0; i < jumlah; i++) {
+        printf("| %-3u | %-20s | %-15s | %-15s | %-5u | %-5u | %-8u |\n",
+               daftar[i].id, daftar[i].nama, daftar[i].merek,
+               daftar[i].model, daftar[i].tahunProduksi,
+               daftar[i].jumlahUnit, daftar[i].tersedia);
+    }
+}
+
+void tambah_alat_admin() {
+    unsigned int id, tahun, jumlah;
+    char nama[100], merek[100], model[100];
+
     printf("Masukkan ID Alat: ");
-    scanf("%u", &alat.id);
+    scanf("%u", &id); bersihkanBufferAdmin();
+    
     printf("Masukkan Nama Alat: ");
-    scanf(" %99[^\n]", alat.nama);
+    scanf(" %99[^\n]", nama); bersihkanBufferAdmin();
+    
     printf("Masukkan Merek Alat: ");
-    scanf(" %99[^\n]", alat.merek);
+    scanf(" %99[^\n]", merek); bersihkanBufferAdmin();
+    
     printf("Masukkan Model Alat: ");
-    scanf(" %99[^\n]", alat.model);
-    printf("Masukkan Tahun Produksi Alat: ");
-    scanf("%u", &alat.tahunProduksi);
-    printf("Masukkan Jumlah Unit Alat: ");
-    scanf("%u", &alat.jumlahUnit);
+    scanf(" %99[^\n]", model); bersihkanBufferAdmin();
     
-    alat.tersedia = alat.jumlahUnit; 
+    printf("Masukkan Tahun Produksi: ");
+    scanf("%u", &tahun); bersihkanBufferAdmin();
+    
+    printf("Masukkan Jumlah Unit: ");
+    scanf("%u", &jumlah); bersihkanBufferAdmin();
 
-    fprintf(file, "%u;%s;%s;%s;%u;%u;%u\n", 
-            alat.id, alat.nama, alat.merek, alat.model, 
-            alat.tahunProduksi, alat.jumlahUnit, alat.tersedia);
-    
-    fclose(file);
-    printf("Data alat berhasil ditambahkan.\n");
+    if (tambahAlat(id, nama, merek, model, tahun, jumlah)) {
+        printf("Data alat berhasil ditambahkan.\n");
+    } else {
+        printf("Gagal menambahkan alat (cek error di atas).\n");
+    }
 }
 
-void edit_alat(){
-    FILE *file = fopen("../data/alat.txt", "r");
-    FILE *temp = fopen("../data/temp.txt", "w");
-    if (!file || !temp) {
-        printf("Gagal membuka file (data/alat.txt atau data/temp.txt)\n");
-        if(file) fclose(file);
-        if(temp) fclose(temp);
-        return;
-    }
-
+void edit_alat_admin() {
     unsigned int id;
-    Alat alat; // Menggunakan struct Alat
-    int found = 0;
-
     printf("Masukkan ID Alat yang akan diedit: ");
-    scanf("%u", &id);
-    
-    // PERBAIKAN: Format fscanf diubah ke ; dan 7 kolom
-    while (fscanf(file, "%u;%99[^;];%99[^;];%99[^;];%u;%u;%u\n", 
-                &alat.id, alat.nama, alat.merek, alat.model, 
-                &alat.tahunProduksi, &alat.jumlahUnit, &alat.tersedia) == 7) {
-        
-        if (alat.id == id) {
-            found = 1;
-            printf("Data ditemukan. Masukkan data baru.\n");
-            printf("Masukkan Nama Alat: ");
-            scanf(" %99[^\n]", alat.nama);
-            printf("Masukkan Merek Alat: ");
-            scanf(" %99[^\n]", alat.merek);
-            printf("Masukkan Model Alat: ");
-            scanf(" %99[^\n]", alat.model);
-            printf("Masukkan Tahun Produksi Alat: ");
-            scanf("%u", &alat.tahunProduksi);
-            printf("Masukkan Jumlah Unit Alat: ");
-            scanf("%u", &alat.jumlahUnit);
-            
-            printf("Jumlah tersedia direset ke %u\n", alat.jumlahUnit);
-            alat.tersedia = alat.jumlahUnit;
-        }
-        
-        fprintf(temp, "%u;%s;%s;%s;%u;%u;%u\n", 
-                alat.id, alat.nama, alat.merek, alat.model, 
-                alat.tahunProduksi, alat.jumlahUnit, alat.tersedia);
-    }
-    fclose(file);
-    fclose(temp);
+    scanf("%u", &id); bersihkanBufferAdmin();
 
-    if (found) {
-        remove("../data/alat.txt");
-        rename("../data/temp.txt", "../data/alat.txt");
-        printf("Data alat berhasil diupdate.\n");
-    } else {
-        remove("../data/temp.txt");
-        printf("Data dengan ID %u tidak ditemukan.\n", id);
-    }
-}
-
-void hapus_alat(){
-    FILE *file = fopen("../data/alat.txt", "r");
-    FILE *temp = fopen("../data/temp.txt", "w");
-    if (!file || !temp) {
-        printf("Gagal membuka file.\n");
-        if(file) fclose(file);
-        if(temp) fclose(temp);
+    Alat* alat = cariAlatById(id);
+    if (alat == NULL) {
+        printf("Error: ID %u tidak ditemukan!\n", id);
         return;
     }
 
-    unsigned int id;
-    Alat alat; 
-    int found = 0;
+    printf("Data saat ini: [%s], [%s], [%s], [%u], [%u], Tersedia [%u]\n", 
+           alat->nama, alat->merek, alat->model, alat->tahunProduksi, alat->jumlahUnit, alat->tersedia);
+    printf("Masukkan data baru (tekan Enter untuk skip):\n");
 
-    printf("Masukkan ID Alat yang akan dihapus: ");
-    scanf("%u", &id);
+    char buffer[100];
 
-    while (fscanf(file, "%u;%99[^;];%99[^;];%99[^;];%u;%u;%u\n", 
-                &alat.id, alat.nama, alat.merek, alat.model, 
-                &alat.tahunProduksi, &alat.jumlahUnit, &alat.tersedia) == 7) {
-        
-        if (alat.id == id) {
-            found = 1;
-            continue; 
-        }
-        
-        fprintf(temp, "%u;%s;%s;%s;%u;%u;%u\n", 
-                alat.id, alat.nama, alat.merek, alat.model, 
-                alat.tahunProduksi, alat.jumlahUnit, alat.tersedia);
+    printf("Nama: ");
+    fgets(buffer, 99, stdin); buffer[strcspn(buffer, "\n")] = 0;
+    if (strlen(buffer) > 0) strcpy(alat->nama, buffer);
+
+    printf("Merek: ");
+    fgets(buffer, 99, stdin); buffer[strcspn(buffer, "\n")] = 0;
+    if (strlen(buffer) > 0) strcpy(alat->merek, buffer);
+
+    printf("Model: ");
+    fgets(buffer, 99, stdin); buffer[strcspn(buffer, "\n")] = 0;
+    if (strlen(buffer) > 0) strcpy(alat->model, buffer);
+
+    printf("Tahun: ");
+    fgets(buffer, 99, stdin); buffer[strcspn(buffer, "\n")] = 0;
+    if (strlen(buffer) > 0) alat->tahunProduksi = (unsigned int)atoi(buffer);
+
+    printf("Jumlah Total Unit: ");
+    fgets(buffer, 99, stdin); buffer[strcspn(buffer, "\n")] = 0;
+    if (strlen(buffer) > 0) {
+        unsigned int jumlahBaru = (unsigned int)atoi(buffer);
+        // Hitung selisih untuk menyesuaikan 'tersedia'
+        int selisih = (int)jumlahBaru - (int)alat->jumlahUnit;
+        alat->jumlahUnit = jumlahBaru;
+        int tersediaBaru = (int)alat->tersedia + selisih;
+        if (tersediaBaru < 0) tersediaBaru = 0;
+        if (tersediaBaru > (int)alat->jumlahUnit) tersediaBaru = (int)alat->jumlahUnit;
+        alat->tersedia = (unsigned int)tersediaBaru;
+        printf("Jumlah unit diupdate, ketersediaan disesuaikan menjadi: %u\n", alat->tersedia);
     }
-    fclose(file);
-    fclose(temp);
-
-    if (found) {
-        remove("../data/alat.txt");
-        rename("../data/temp.txt", "../data/alat.txt");
-        printf("Data alat berhasil dihapus.\n");
-    } else {
-        remove("../data/temp.txt");
-        printf("Data dengan ID %u tidak ditemukan.\n", id);
-    }
+    
+    simpanDataAlat(); // Simpan perubahan ke file
+    printf("Data alat berhasil diupdate.\n");
 }
 
-void menu_admin(){
+void hapus_alat_admin() {
+    unsigned int id;
+    printf("Masukkan ID Alat yang akan dihapus: ");
+    scanf("%u", &id); bersihkanBufferAdmin();
+
+    hapusAlat(id); 
+}
+
+void menu_admin() {
     int pilihan;
+    muatDataAlat(); 
+
     do {
         printf("\n===== Menu Admin =====\n");
-        printf("1. Tampilkan Alat\n");
-        printf("2. Tambah Alat\n");
+        printf("1. Tampilkan Semua Alat\n");
+        printf("2. Tambah Alat Baru\n");
         printf("3. Edit Alat\n");
         printf("4. Hapus Alat\n");
         printf("5. Keluar ke Login Utama\n");
         printf("Pilih menu: ");
-        scanf("%d", &pilihan);
         
-        // Membersihkan buffer stdin
-        while(getchar() != '\n'); 
+        if (scanf("%d", &pilihan) != 1) {
+            pilihan = 0; // Pilihan default jika input bukan angka
+        }
+        bersihkanBufferAdmin(); // Selalu bersihkan buffer
 
         switch (pilihan) {
-            case 1: tampilkan_alat(); break;
-            case 2: tambah_alat(); break;
-            case 3: edit_alat(); break;
-            case 4: hapus_alat(); break;
+            case 1: tampilkan_alat_admin(); break;
+            case 2: tambah_alat_admin(); break;
+            case 3: edit_alat_admin(); break;
+            case 4: hapus_alat_admin(); break;
             case 5: printf("Keluar dari menu admin...\n"); break;
             default: printf("Pilihan tidak valid. Silakan coba lagi.\n");
         }

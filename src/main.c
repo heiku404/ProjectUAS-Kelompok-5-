@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
     }
     else
     {
-        // login() akan mencetak "Login failed"
     }
 
     printf("Program Selesai.\n");

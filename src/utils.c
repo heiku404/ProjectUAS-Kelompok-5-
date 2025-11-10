@@ -1,127 +1,143 @@
 #include "../include/utils.h"
 
-int fileKosong (const char*namaFile){
-    FILE *fp = fopen ("alat.txt", "r");
-    if (fp == NULL){
-        return 1;
-    }
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fclose(fp);
+static Alat daftarAlat[MAX_ALAT];
+static int jumlahAlat = 0;
 
-    if (size == 0)
-        return 1;  // kosong
-    else
-        return 0;  // ada isi
+void muatDataAlat() {
+    FILE *file = fopen(FILE_PATH, "r");
+    if (file == NULL) {
+        printf("Gagal membuka %s. File mungkin belum ada.\n", FILE_PATH);
+        jumlahAlat = 0;
+        return;
+    }
+
+    jumlahAlat = 0;
+    while (jumlahAlat < MAX_ALAT &&
+           fscanf(file, "%u;%99[^;];%99[^;];%99[^;];%u;%u;%u\n",
+                  &daftarAlat[jumlahAlat].id,
+                  daftarAlat[jumlahAlat].nama,
+                  daftarAlat[jumlahAlat].merek,
+                  daftarAlat[jumlahAlat].model,
+                  &daftarAlat[jumlahAlat].tahunProduksi,
+                  &daftarAlat[jumlahAlat].jumlahUnit,
+                  &daftarAlat[jumlahAlat].tersedia) == 7) {
+        jumlahAlat++;
+    }
+    fclose(file);
 }
 
-int cariAlatById(unsigned int id, Alat *out) {
-    FILE *fp = fopen("alat.txt", "r");
-    if (fp == NULL){
-        printf("file tidak ditemukan");
+void simpanDataAlat() {
+    FILE *file = fopen(FILE_PATH, "w");
+    if (file == NULL) {
+        printf("FATAL ERROR: Gagal menyimpan data ke %s!\n", FILE_PATH);
+        return;
+    }
+    for (int i = 0; i < jumlahAlat; i++) {
+        fprintf(file, "%u;%s;%s;%s;%u;%u;%u\n",
+                daftarAlat[i].id,
+                daftarAlat[i].nama,
+                daftarAlat[i].merek,
+                daftarAlat[i].model,
+                daftarAlat[i].tahunProduksi,
+                daftarAlat[i].jumlahUnit,
+                daftarAlat[i].tersedia);
+    }
+    fclose(file);
+}
+
+Alat* dapatkanSemuaAlat(int* jumlah) {
+    *jumlah = jumlahAlat;
+    return daftarAlat;
+}
+
+Alat* cariAlatById(unsigned int id) {
+    for (int i = 0; i < jumlahAlat; i++) {
+        if (daftarAlat[i].id == id) {
+            return &daftarAlat[i]; // Kembalikan alamat (pointer)
+        }
+    }
+    return NULL; // Tidak ditemukan
+}
+
+int tambahAlat(unsigned int id, char* nama, char* merek, char* model, unsigned int tahun, unsigned int jumlah) {
+    if (cariAlatById(id) != NULL) {
+        printf("Error: ID %u sudah ada!\n", id);
+        return 0; // Gagal (ID duplikat)
+    }
+    if (jumlahAlat >= MAX_ALAT) {
+        printf("Error: Database penuh!\n");
+        return 0; // Gagal (Database penuh)
+    }
+
+    Alat* alatBaru = &daftarAlat[jumlahAlat];
+    alatBaru->id = id;
+    strcpy(alatBaru->nama, nama);
+    strcpy(alatBaru->merek, merek);
+    strcpy(alatBaru->model, model);
+    alatBaru->tahunProduksi = tahun;
+    alatBaru->jumlahUnit = jumlah;
+    alatBaru->tersedia = jumlah; // Saat baru ditambah, semua tersedia
+
+    jumlahAlat++;
+    simpanDataAlat(); // Langsung simpan ke file
+    return 1; // Sukses
+}
+
+int hapusAlat(unsigned int id) {
+    int index = -1;
+    for (int i = 0; i < jumlahAlat; i++) {
+        if (daftarAlat[i].id == id) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        printf("Error: ID %u tidak ditemukan!\n", id);
+        return 0; // Gagal (tidak ditemukan)
+    }
+
+    // Geser semua elemen setelahnya ke kiri
+    for (int i = index; i < jumlahAlat - 1; i++) {
+        daftarAlat[i] = daftarAlat[i + 1];
+    }
+
+    jumlahAlat--;
+    simpanDataAlat();
+    printf("Data dengan ID %u berhasil dihapus.\n", id);
+    return 1; // Sukses
+}
+
+int pinjamAlat(unsigned int id) {
+    Alat* alat = cariAlatById(id);
+    if (alat == NULL) {
+        printf("Error: ID %u tidak ditemukan!\n", id);
         return 0;
     }
-    char line[256];
-    while(fgets(line,sizeof(line), fp)!= NULL){
-        unsigned int tid, ttahun, tjumlah;
-        char tnama[50], tmerek[30], tmodel[30];
-
-        int parsed = sscanf(line, "%u|%49[^|]|%29[^|]|%29[^|]|%u|%u",&tid, tnama, tmerek, tmodel, &ttahun, &tjumlah);
-        if (parsed == 6 && tid == id){
-            out->id = tid;
-            strcpy(out->name, tnama);
-            strcpy(out->merek, tmerek);
-            strcpy(out->model, tmodel);
-            out->tahun_produksi = ttahun;
-            out->jumlah_unit = tjumlah;
-            fclose(fp);
-            return 1;
-        }
+    if (alat->tersedia == 0) {
+        printf("Maaf, alat '%s' sedang habis dipinjam.\n", alat->nama);
+        return 0;
     }
-    fclose(fp);
-    return 0;
+
+    alat->tersedia--;
+    simpanDataAlat();
+    printf("Anda berhasil meminjam: %s (Tersisa: %u)\n", alat->nama, alat->tersedia);
+    return 1;
 }
 
-int updateJumlahAlat(unsigned int id, int perubahan){
-        FILE*fp = fopen ("alat.txt", "r");
-        if (fp == NULL){
-            return 0;
-        }
-
-        FILE*temp = fopen("temp.txt", "w");
-        if (temp == NULL){
-            fclose(fp);
-            return 0;
-        }
-        char line[256];
-        int found = 0;
-
-        while(fgets(line, sizeof(line), fp)!=NULL){
-            unsigned int tid, ttahun, tjumlah;
-            char tnama[50], tmerek[30], tmodel[30];
-
-            int parsed= sscanf(line, "%u|%49[^|]|%29[^|]|%29[^|]|%u|%u",&tid, tnama, tmerek, tmodel, &ttahun, &tjumlah);
-            if (parsed != 6) continue;
-            if (tid==id){
-                long newJumlah = (long)tjumlah+perubahan;
-                if (newJumlah < 0){
-                    printf("jumlah gaboleh negatif");
-                    newJumlah= tjumlah;
-                } else{
-                    tjumlah = (unsigned int)newJumlah;
-                    found=1;
-                }
-            }
-            fprintf(temp, "%u|%s|%s|%s|%u|%u\n",
-                tid, tnama, tmerek, tmodel, ttahun, tjumlah);
-        }
-        fclose(fp);
-        fclose(temp);
-        remove("alat.txt");
-        rename("temp.txt", "alat.txt");
-        return found ? 1 : 0;
+int kembalikanAlat(unsigned int id) {
+    Alat* alat = cariAlatById(id);
+    if (alat == NULL) {
+        printf("Error: ID %u tidak ditemukan!\n", id);
+        return 0;
+    }
+    if (alat->tersedia >= alat->jumlahUnit) {
+        printf("Alat '%s' sudah lengkap (%u unit). Pengembalian ditolak.\n", alat->nama, alat->jumlahUnit);
+        return 0; // Tidak bisa mengembalikan lebih
     }
 
-void hapusBarisById(const char *namaFile, unsigned int idHapus) {
-    FILE *fp = fopen(namaFile, "r");
-    if (fp == NULL) {
-        printf("File tidak ditemukan.\n");
-        return;
-    }
-
-    FILE *temp = fopen("temp.txt", "w");
-    if (temp == NULL) {
-        printf("Gagal membuat file sementara.\n");
-        fclose(fp);
-        return;
-    }
-        char line[256];
-    int found = 0;
-
-    while (fgets(line, sizeof(line), fp) != NULL) {
-        unsigned int tid, ttahun, tjumlah;
-        char tnama[50], tmerek[30], tmodel[30];
-
-        int parsed = sscanf(line, "%u|%49[^|]|%29[^|]|%29[^|]|%u|%u",
-                            &tid, tnama, tmerek, tmodel, &ttahun, &tjumlah);
-
-        if (parsed != 6) continue; // lewati baris rusak
-
-        if (tid == idHapus) {
-            found = 1;
-            continue; // lewati baris ini (hapus)
-        }
-
-        fprintf(temp, "%u|%s|%s|%s|%u|%u\n",
-                tid, tnama, tmerek, tmodel, ttahun, tjumlah);
-    }
-    fclose(fp);
-    fclose(temp);
-
-    remove(namaFile);              // hapus file lama
-    rename("temp.txt", namaFile);  // ganti dengan file baru
-     if (found)
-        printf("Data dengan ID %u berhasil dihapus.\n", idHapus);
-    else
-        printf("Data dengan ID %u tidak ditemukan.\n", idHapus);
+    alat->tersedia++;
+    simpanDataAlat();
+    printf("Alat '%s' telah dikembalikan. (Tersedia: %u)\n", alat->nama, alat->tersedia);
+    return 1;
 }
