@@ -38,6 +38,8 @@ int cariAlatById(unsigned int id, Alat *out) {
             return 1;
         }
     }
+    fclose(fp);
+    return 0;
 }
 
 int updateJumlahAlat(unsigned int id, int perubahan){

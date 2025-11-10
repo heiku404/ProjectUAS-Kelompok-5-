@@ -6,7 +6,7 @@ int login(char *username, char *password)
     char temp_password[maxSize];
 
     FILE *fptr;
-    fptr = fopen("admin.txt", "r");
+    fptr = fopen("../data/admin.txt", "r");
 
     if (fptr == NULL)
     {
@@ -25,7 +25,7 @@ int login(char *username, char *password)
 
     fclose(fptr);
 
-    fptr = fopen("user.txt", "r");
+    fptr = fopen("../data/user.txt", "r");
 
     if (fptr == NULL)
     {
