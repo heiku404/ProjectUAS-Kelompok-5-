@@ -41,9 +41,7 @@ void pinjam_alat() {
     load_alat(daftar_alat, &jumlah_alat, "../data/listbarang.txt");
 
     view_list(); 
-    if (jumlah_alat == 0) {
-        return; 
-    }
+    if (jumlah_alat == 0) { return; }
 
     unsigned int id_pinjam;
     int kuantitas_pinjam; 
@@ -51,40 +49,47 @@ void pinjam_alat() {
 
     printf("Masukkan ID Alat yang ingin dipinjam: ");
     scanf("%u", &id_pinjam);
-
     for (int i = 0; i < jumlah_alat; i++) {
         if (daftar_alat[i].id_alat == id_pinjam) {
             index_barang = i; 
             break;
         }
     }
-
-    if (index_barang == -1) {
-        printf("Program Gagal: ID Alat tidak ditemukan.\n");
-        return;
+    if (index_barang == -1){
+        return; 
     }
 
     printf("Masukkan jumlah yang ingin dipinjam (Stok tersedia: %u): ", daftar_alat[index_barang].jumlah_alat);
     scanf("%d", &kuantitas_pinjam); 
 
-    if (kuantitas_pinjam <= 0) {
-        printf("Program Gagal: Jumlah pinjam tidak valid.\n");
-        return;
+    if (kuantitas_pinjam <= 0){
+        return; 
     }
     if (kuantitas_pinjam > daftar_alat[index_barang].jumlah_alat) {
-        printf("Program Gagal: Stok tidak mencukupi!\n");
-        return;
+        return; 
     }
 
   
     alat_lab alat_yg_dipinjam = daftar_alat[index_barang];
     alat_yg_dipinjam.jumlah_alat = kuantitas_pinjam; 
 
-    // mengurangi stok di listbarang.txt
-    daftar_alat[index_barang].jumlah_alat -= kuantitas_pinjam; 
-    save_alat(daftar_alat, jumlah_alat, "../data/listbarang.txt"); 
 
-    // update stok di listpinjam.txt
+    daftar_alat[index_barang].jumlah_alat -= kuantitas_pinjam; 
+
+    FILE *fptr_barang = fopen("../data/listbarang.txt", "w");
+    if (fptr_barang == NULL) {
+        printf("Program Gagal: Gagal update file listbarang.txt!\n");
+        return;
+    }
+    for (int i = 0; i < jumlah_alat; i++) {
+        if (i > 0) { fprintf(fptr_barang, "\n"); }
+        fprintf(fptr_barang, "%u;%s;%s;%s;%u;%u",
+                daftar_alat[i].id_alat, daftar_alat[i].nama_alat,
+                daftar_alat[i].merk_alat, daftar_alat[i].model_alat,
+                daftar_alat[i].tahun_produksi_alat, daftar_alat[i].jumlah_alat);
+    }
+    fclose(fptr_barang);
+
     alat_lab daftar_pinjam[maxSize];
     int total_pinjaman = 0; 
     load_alat(daftar_pinjam, &total_pinjaman, "../data/listpinjam.txt");
@@ -104,9 +109,21 @@ void pinjam_alat() {
         total_pinjaman++; 
     }
 
-    save_alat(daftar_pinjam, total_pinjaman, "../data/listpinjam.txt");
+    FILE *fptr_pinjam = fopen("../data/listpinjam.txt", "w");
+    if (fptr_pinjam == NULL) {
+        printf("Error: Gagal update file listpinjam.txt!\n");
+        return;
+    }
+    for (int i = 0; i < total_pinjaman; i++) {
+        if (i > 0) { fprintf(fptr_pinjam, "\n"); }
+        fprintf(fptr_pinjam, "%u;%s;%s;%s;%u;%u",
+                daftar_pinjam[i].id_alat, daftar_pinjam[i].nama_alat,
+                daftar_pinjam[i].merk_alat, daftar_pinjam[i].model_alat,
+                daftar_pinjam[i].tahun_produksi_alat, daftar_pinjam[i].jumlah_alat);
+    }
+    fclose(fptr_pinjam);
 
-    printf("\nBERHASIL: Anda telah meminjam %d unit %s.\n", kuantitas_pinjam, alat_yg_dipinjam.nama_alat);
+    printf("\nProgram BERHASIL: Anda telah meminjam %d unit %s.\n", kuantitas_pinjam, alat_yg_dipinjam.nama_alat);
 }
 
 void kembalikan_alat() {
@@ -116,42 +133,33 @@ void kembalikan_alat() {
 
     printf("\n--- Alat yang Sedang Anda Pinjam ---");
     view_list_pinjam(); 
-    
-    if (jumlah_pinjam == 0) {
-        return; 
-    }
+    if (jumlah_pinjam == 0) { return; }
 
     unsigned int id_kembali;
-    int kuantitas_kembali; // Ganti nama agar jelas
+    int kuantitas_kembali;
     int index_pinjam = -1;
 
     printf("Masukkan ID Alat yang ingin dikembalikan: ");
     scanf("%u", &id_kembali);
-
     for (int i = 0; i < jumlah_pinjam; i++) {
         if (daftar_pinjam[i].id_alat == id_kembali) {
             index_pinjam = i; 
             break;
         }
     }
-
-    if (index_pinjam == -1) {
-        printf("Program Gagal: Anda tidak sedang meminjam alat dengan ID tersebut.\n");
-        return;
+    if (index_pinjam == -1){
+        return; 
     }
 
     printf("Masukkan jumlah yang ingin dikembalikan (Anda pinjam: %u): ", daftar_pinjam[index_pinjam].jumlah_alat);
     scanf("%d", &kuantitas_kembali);
 
-    if (kuantitas_kembali <= 0) {
-        printf("Program Gagal: Jumlah pengembalian tidak valid.\n");
-        return;
+    if (kuantitas_kembali <= 0){
+        return; 
     }
-    if (kuantitas_kembali > daftar_pinjam[index_pinjam].jumlah_alat) {
-        printf("Program Gagal: Anda tidak meminjam sebanyak itu!\n");
-        return;
+    if (kuantitas_kembali > daftar_pinjam[index_pinjam].jumlah_alat){
+        return; 
     }
-
 
     alat_lab daftar_alat[maxSize];
     int jumlah_alat = 0;
@@ -167,7 +175,19 @@ void kembalikan_alat() {
 
     if (index_barang != -1) { 
         daftar_alat[index_barang].jumlah_alat += kuantitas_kembali;
-        save_alat(daftar_alat, jumlah_alat, "../data/listbarang.txt");
+        
+        FILE *fptr_barang = fopen("../data/listbarang.txt", "w");
+        if (fptr_barang == NULL){
+            return; 
+        }
+        for (int i = 0; i < jumlah_alat; i++) {
+            if (i > 0) { fprintf(fptr_barang, "\n"); }
+            fprintf(fptr_barang, "%u;%s;%s;%s;%u;%u",
+                    daftar_alat[i].id_alat, daftar_alat[i].nama_alat,
+                    daftar_alat[i].merk_alat, daftar_alat[i].model_alat,
+                    daftar_alat[i].tahun_produksi_alat, daftar_alat[i].jumlah_alat);
+        }
+        fclose(fptr_barang);
     } else {
         printf("Info: Stok utama untuk barang ini tidak ditemukan, data pinjaman tetap dihapus.\n");
     }
@@ -181,7 +201,18 @@ void kembalikan_alat() {
         jumlah_pinjam--; 
     }
     
-    save_alat(daftar_pinjam, jumlah_pinjam, "../data/listpinjam.txt");
+    FILE *fptr_pinjam = fopen("../data/listpinjam.txt", "w");
+    if (fptr_pinjam == NULL) {
+        return; 
+    }
+    for (int i = 0; i < jumlah_pinjam; i++) {
+        if (i > 0) { fprintf(fptr_pinjam, "\n"); }
+        fprintf(fptr_pinjam, "%u;%s;%s;%s;%u;%u",
+                daftar_pinjam[i].id_alat, daftar_pinjam[i].nama_alat,
+                daftar_pinjam[i].merk_alat, daftar_pinjam[i].model_alat,
+                daftar_pinjam[i].tahun_produksi_alat, daftar_pinjam[i].jumlah_alat);
+    }
+    fclose(fptr_pinjam);
 
-    printf("\nBERHASIL: Anda telah mengembalikan %d unit alat.\n", kuantitas_kembali);
+    printf("\nProgram BERHASIL: Anda telah mengembalikan %d unit alat.\n", kuantitas_kembali);
 }
