@@ -25,7 +25,7 @@ void menu_admin(){
         break;
 
         case 4: 
-        printf("Keluar dari menu user...\n");
+        printf("Keluar dari menu admin...\n");
         break;
         
         default:
