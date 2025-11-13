@@ -23,6 +23,10 @@ void menu_admin(){
         case 3:
         edit_list();
         break;
+
+        case 4: 
+        printf("Keluar dari menu user...\n");
+        break;
         
         default:
         printf("Input invalid\n");
